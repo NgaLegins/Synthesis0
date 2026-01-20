@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthesis - A/V Experience</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font: Pixelify Sans (Stile Pixel Art) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Pixelify Sans', cursive, sans-serif;
+            background-color: black;
+            color: white;
+            overflow: hidden;
+            /* Forza il rendering nitido dei pixel */
+            image-rendering: pixelated; 
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+        
+        /* Custom Animations */
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        @keyframes scroll-right {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+
+        .animate-scroll-left {
+            animation: scroll-left linear infinite;
+        }
+        .animate-scroll-right {
+            animation: scroll-right linear infinite;
+        }
+
+        /* Hide scrollbars */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Utility for transitions */
+        .view-transition {
+            transition: all 0.5s steps(10); /* Transizione a scatti per effetto retro */
+        }
+        
+        .fade-out-scale {
+            opacity: 0;
+            transform: scale(1.1);
+            filter: blur(0px); /* Niente blur per mantenere i pixel netti */
+            pointer-events: none;
+        }
+        
+        .fade-in-up {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        
+        .hidden-down {
+            opacity: 0;
+            transform: translateY(2rem);
+            pointer-events: none;
+        }
+
+        /* Stile pulsante retro */
+        .btn-retro {
+            border: 2px solid currentColor;
+            box-shadow: 4px 4px 0px 0px currentColor;
+            transition: all 0.1s steps(2);
+        }
+        .btn-retro:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px currentColor;
+        }
+        .btn-retro:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px currentColor;
+        }
+    </style>
+</head>
+<body class="w-full h-screen selection:bg-white selection:text-black">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="relative w-full h-full">
+
+        <!-- === HOME VIEW === -->
+        <div id="home-view" class="absolute inset-0 view-transition opacity-100 scale-100">
+            
+            <!-- Navbar (Empty as requested) -->
+            <nav class="absolute top-0 w-full p-8 flex justify-between items-center z-50 pointer-events-none"></nav>
+
+            <!-- Hero Text -->
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full px-4 pointer-events-none">
+                <!-- Titolo più grande e spaziato -->
+                <h1 class="text-6xl md:text-8xl lg:text-9xl font-bold tracking-widest mb-4 text-white uppercase drop-shadow-[4px_4px_0_rgba(255,0,0,0.5)]">
+                    Synthesis
+                </h1>
+                <p class="mt-8 text-sm font-bold tracking-[0.2em] uppercase opacity-80 animate-pulse text-green-400">
+                    &gt; CLICCA PER ESPLORARE_
+                </p>
+            </div>
+
+            <!-- Lanes Container -->
+            <div id="lanes-container" class="absolute inset-0 w-full h-full z-10">
+                <!-- Lanes will be injected here by JS -->
+            </div>
+        </div>
+
+        <!-- === DETAIL VIEW === -->
+        <div id="detail-view" class="absolute inset-0 z-50 bg-white flex flex-col view-transition hidden-down">
+            
+            <!-- Header (Back Button) -->
+            <div class="absolute top-0 left-0 w-full p-8 z-50 pointer-events-none">
+                <button onclick="goBack()" id="back-btn" class="pointer-events-auto btn-retro group flex items-center space-x-4 text-sm font-bold uppercase tracking-widest transition-colors text-black bg-white p-3 hover:bg-gray-100 cursor-pointer">
+                    <!-- Arrow Left Icon (Pixel style roughly) -->
+                    <span class="text-xl">&lt;</span>
+                    <span>INDIETRO</span>
+                </button>
+            </div>
+
+            <!-- Content Container -->
+            <div class="flex-1 w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
+                
+                <!-- CANVAS for Hydra -->
+                <canvas id="hydra-canvas" class="absolute inset-0 w-full h-full object-cover hidden"></canvas>
+
+                <!-- IFRAME for External Links -->
+                <iframe id="external-iframe" class="absolute inset-0 w-full h-full border-0 hidden bg-white"></iframe>
+
+                <!-- STANDARD CONTENT (Placeholder) -->
+                <div id="standard-content" class="text-center space-y-6 max-w-2xl px-8 bg-white border-4 border-black p-12 shadow-[8px_8px_0_0_#000] hidden">
+                    <div class="inline-block p-4 border-2 border-black bg-black text-white mb-4">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><polyline points="5 9 2 12 5 15"></polyline><polyline points="9 5 12 2 15 5"></polyline><polyline points="15 19 12 22 9 19"></polyline><polyline points="19 9 22 12 19 15"></polyline><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line></svg>
+                    </div>
+                    <p class="text-black font-bold text-xl leading-relaxed uppercase">Contenuto Standard.</p>
+                </div>
+
+                <!-- SPECIAL AV OVERLAY (Play Button) -->
+                <div id="av-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-none hidden">
+                    <button onclick="startExperience()" class="btn-retro flex items-center gap-3 px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-gray-200 cursor-pointer">
+                        <span class="text-2xl">▶</span>
+                        AVVIA ESPERIENZA
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        // --- DATA ---
+        const lanesData = [
+            {
+                id: 'lane-1', top: '5%', direction: 'left', speed: 40,
+                items: [
+                    { id: 1, title: "Minimal Studio", image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" },
+                    { id: 5, title: "Architecture Arc", image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" }
+                ]
+            },
+            {
+                id: 'lane-2', top: '25%', direction: 'right', speed: 55,
+                items: [
+                     { 
+                         id: 2, 
+                         title: "Ethereal Brand", 
+                         image: "https://github.com/NgaLegins/Synthesis2/blob/main/Screenshot%202026-01-20%20alle%2016.27.00.png?raw=true",
+                         link: "https://ngalegins.github.io/Synthesis2/",
+                         hasMic: true
+                     }
+                ]
+            },
+            {
+                id: 'lane-3', top: '65%', direction: 'right', speed: 45,
+                items: [
+                    { 
+                        id: 'special-av', 
+                        title: "A/V Distortion", 
+                        image: "https://raw.githubusercontent.com/NgaLegins/Synthesis/main/Screenshot%202026-01-20%20alle%2015.40.25.png",
+                        isSpecial: true,
+                        type: 'distortion'
+                    },
+                    { 
+                        id: 6, 
+                        title: "Synthesis 3", 
+                        image: "https://github.com/NgaLegins/Synthesis3/blob/main/Screenshot%202026-01-20%20alle%2016.49.07.png?raw=true",
+                        link: "https://ngalegins.github.io/Synthesis3/"
+                    }
+                ]
+            },
+            {
+                id: 'lane-4', top: '82%', direction: 'left', speed: 35,
+                items: [
+                    { 
+                        id: 4, 
+                        title: "Synthesis 4", 
+                        image: "https://github.com/NgaLegins/Synthesis4/blob/main/Screenshot%202026-01-20%20alle%2017.16.08.png?raw=true", 
+                        link: "https://ngalegins.github.io/Synthesis4/", 
+                        hasMouse: true 
+                    }
+                ]
+            }
+        ];
+
+        // --- STATE & REFS ---
+        let currentItem = null;
+        let isPlaying = false;
+        let animationId = null;
+        let toneTransport = null;
+        let hydraInstance = null;
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            renderLanes();
+        };
+
+        // --- RENDER LANES ---
+        function renderLanes() {
+            const container = document.getElementById('lanes-container');
+            let html = '';
+
+            lanesData.forEach(lane => {
+                // Prepare items HTML (duplicated 4 times for loop)
+                let itemsHtml = '';
+                const loopItems = [...lane.items, ...lane.items, ...lane.items, ...lane.items];
+                
+                loopItems.forEach((item, idx) => {
+                    const uniqueId = `item-${lane.id}-${idx}`;
+                    const itemData = encodeURIComponent(JSON.stringify(item));
+                    
+                    // Bordi squadrati invece che rounded
+                    // Se speciale, bordo rosso e spesso
+                    const borderClass = item.isSpecial ? 'border-4 border-red-500' : 'border-2 border-transparent hover:border-white';
+                    
+                    // Logic per le icone
+                    let iconHtml = '';
+                    if (item.isSpecial) {
+                        iconHtml = `<div class="absolute top-2 right-2 text-white drop-shadow-[2px_2px_0_rgba(0,0,0,1)] animate-pulse">
+                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                           </div>`;
+                    } else if (item.hasMic) {
+                        iconHtml = `<div class="absolute top-2 right-2 text-white drop-shadow-[2px_2px_0_rgba(0,0,0,1)] animate-pulse">
+                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                           </div>`;
+                    } else if (item.hasMouse) {
+                        iconHtml = `<div class="absolute top-2 right-2 text-white drop-shadow-[2px_2px_0_rgba(0,0,0,1)] animate-pulse">
+                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>
+                           </div>`;
+                    }
+                    
+                    const sparkleHtml = item.isSpecial
+                        ? `<span class="ml-2 text-red-500 font-bold">*</span>`
+                        : '';
+
+                    itemsHtml += `
+                        <div 
+                            onclick="handleItemClick('${itemData}')"
+                            class="relative group cursor-pointer transition-transform duration-100 hover:scale-105 hover:z-30 shrink-0"
+                        >
+                            <div class="relative w-40 md:w-64 aspect-[4/3] overflow-hidden bg-white p-1 shadow-[4px_4px_0_0_rgba(255,255,255,0.2)] hover:shadow-[6px_6px_0_0_rgba(255,255,255,0.5)] transition-shadow duration-100 ${borderClass}">
+                                <div class="w-full h-full overflow-hidden relative">
+                                    <img 
+                                        src="${item.image}" 
+                                        alt="${item.title}" 
+                                        class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-100"
+                                        style="image-rendering: pixelated;"
+                                        onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
+                                    />
+                                    <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-100"></div>
+                                    ${iconHtml}
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-100 pointer-events-none whitespace-nowrap">
+                                <span class="text-xs font-bold tracking-widest bg-black text-white px-2 py-1 uppercase border-2 border-white shadow-[2px_2px_0_0_rgba(255,255,255,0.5)] flex items-center">
+                                    ${item.title} ${sparkleHtml}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const animClass = lane.direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right';
+                
+                html += `
+                    <div class="absolute w-full flex items-center overflow-hidden" style="top: ${lane.top}; height: 180px;">
+                        <div class="flex items-center space-x-24 md:space-x-48 w-max ${animClass}" style="animation-duration: ${lane.speed}s; padding-left: 10vw;">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function handleItemClick(encodedItem) {
+            const item = JSON.parse(decodeURIComponent(encodedItem));
+            currentItem = item;
+
+            // Transition UI (Retro style: no blur, just scale)
+            document.getElementById('home-view').classList.add('fade-out-scale');
+            document.getElementById('home-view').classList.remove('opacity-100', 'scale-100');
+            
+            setTimeout(() => {
+                const detailView = document.getElementById('detail-view');
+                detailView.classList.remove('hidden-down');
+                detailView.classList.add('fade-in-up');
+                
+                setupDetailView(item);
+            }, 600);
+        }
+
+        function goBack() {
+            window.location.reload();
+        }
+
+        function setupDetailView(item) {
+            const backBtn = document.getElementById('back-btn');
+            const iframe = document.getElementById('external-iframe');
+            
+            document.getElementById('hydra-canvas').classList.add('hidden');
+            document.getElementById('av-overlay').classList.add('hidden');
+            document.getElementById('standard-content').classList.add('hidden');
+            iframe.classList.add('hidden');
+            iframe.src = "";
+
+            if (item.link) {
+                iframe.src = item.link;
+                iframe.classList.remove('hidden');
+                
+                // Pulsante stile retro
+                backBtn.classList.remove('bg-black', 'text-white', 'border-white');
+                backBtn.classList.add('bg-white', 'text-black', 'border-black');
+            } else if (item.isSpecial) {
+                document.getElementById('hydra-canvas').classList.remove('hidden');
+                document.getElementById('av-overlay').classList.remove('hidden');
+                
+                backBtn.classList.remove('bg-white', 'text-black', 'border-black');
+                backBtn.classList.add('bg-black', 'text-white', 'border-white');
+            } else {
+                document.getElementById('standard-content').classList.remove('hidden');
+                backBtn.classList.remove('bg-black', 'text-white', 'border-white');
+                backBtn.classList.add('bg-white', 'text-black', 'border-black');
+            }
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                if (document.querySelector(`script[src="${src}"]`)) {
+                    resolve();
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.body.appendChild(script);
+            });
+        }
+
+        async function startExperience() {
+            try {
+                document.getElementById('av-overlay').classList.add('hidden');
+                
+                await loadScript("https://unpkg.com/tone@14.7.77/build/Tone.js");
+                await loadScript("https://unpkg.com/hydra-synth@1.3.0/dist/hydra-synth.js");
+
+                await window.Tone.start();
+                isPlaying = true;
+
+                const canvas = document.getElementById('hydra-canvas');
+                hydraInstance = new window.Hydra({ 
+                    canvas: canvas, 
+                    detectAudio: false, 
+                    width: canvas.clientWidth, 
+                    height: canvas.clientHeight,
+                    makeGlobal: true
+                });
+                
+                if (!window.a) {
+                    window.a = {
+                        fft: [0, 0, 0, 0],
+                        settings: [{ cutoff: 0.5 }],
+                        show: () => { console.log("Synthesized audio analysis: show()"); },
+                        setBins: (b) => { console.log("Synthesized audio analysis: setBins(" + b + ")"); },
+                        setScale: () => {},
+                        setCutoff: () => {},
+                        setSmooth: () => {}
+                    };
+                } else {
+                    window.a.show = () => { console.log("Using synthesized audio analysis"); };
+                    window.a.setBins = (b) => { console.log("Bins set to " + b); };
+                    if(!window.a.fft) window.a.fft = [0,0,0,0];
+                    if(!window.a.settings) window.a.settings = [{ cutoff: 0.5 }];
+                }
+
+                const Tone = window.Tone;
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
+
+                let stress = 0;
+                let triggerVisivo = 0;
+                let time = 0;
+
+                var crusher = new Tone.BitCrusher(4).toDestination();
+                crusher.wet.value = 0;
+                var dist = new Tone.Distortion(0.5).connect(crusher);
+                dist.wet.value = 0;
+                var verb = new Tone.Reverb({ decay: 3, wet: 0.4 }).connect(dist);
+                var delay = new Tone.PingPongDelay("16n", 0.3).connect(verb);
+                
+                var synth = new Tone.PolySynth(Tone.FMSynth, {
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.1, decay: 0.2, sustain: 0.2, release: 1 }
+                }).connect(delay);
+
+                var seq = new Tone.Sequence((t, note) => {
+                    if (note) {
+                        triggerVisivo = 1;
+                        var detuneAmount = stress * 1000 * (Math.random() > 0.5 ? 1 : -1);
+                        synth.set({ detune: detuneAmount });
+                        synth.triggerAttackRelease(note, "16n", t);
+                    }
+                }, ["C5", "E6", "G4", null, "B4", "C6", "B4", "G4", "E4", null, "G3", "C4", "C2"], "16n").start(0);
+
+                Tone.Transport.bpm.value = 50;
+                Tone.Transport.start();
+                toneTransport = Tone.Transport;
+
+                const customUpdate = () => {
+                    time += 0.01;
+                    stress = (-Math.cos(time * 0.02) * 0.5) + 0.5;
+                    dist.wet.value = Math.pow(stress, 2);
+                    crusher.wet.value = stress > 0.85 ? 1 : 0;
+                    Tone.Transport.bpm.value = 50 + (stress * 70);
+                    var decayRate = 0.96 - (stress * 0.1);
+                    triggerVisivo *= decayRate;
+
+                    if(window.a) {
+                        window.a.fft[0] = stress; 
+                        window.a.fft[1] = triggerVisivo; 
+                        window.a.fft[2] = stress * triggerVisivo; 
+                        window.a.fft[3] = 1 - stress; 
+                    }
+                };
+
+                const loop = () => {
+                    if(!isPlaying) return;
+                    customUpdate();
+                    animationId = requestAnimationFrame(loop);
+                };
+                loop();
+
+                window.noise(4)
+                    .colorama(10)
+                    .posterize(4)
+                    .kaleid(5)
+                    .mask(window.shape(4, 10).modulateScale(window.noise(1,1)))
+                    .mask(window.shape(300, 1, 2.125))
+                    .modulateScale(window.osc(6, 0.125, 0.3).kaleid(50))
+                    .mult(window.osc(20, 0.05, 2.4).kaleid(50), 0.25)
+                    .scale(1.75, 0.2, 0.2)
+                    .modulate(window.noise(0.3))
+                    .saturate(3)
+                    .posterize(3, 0.4)
+                    .scale(1.7) 
+                    .modulate(window.noise(10, 0.1), () => stress * 0.5)
+                    .modulate(window.osc(10, 0.1, 1.5), () => stress * 0.8)
+                    .add(window.osc(50, 0.2, 100).color(1,0,0).kaleid(10), () => Math.pow(stress, 4) * 0.4)
+                    .pixelate(() => 2000 / (1 + (stress * 50)), () => 2000 / (1 + (stress * 50)))
+                    .scale(() => 1 + (triggerVisivo * 0.15))
+                    .out(window.o0);
+
+            } catch (e) {
+                console.error("Error starting AV:", e);
+                document.getElementById('av-overlay').classList.remove('hidden');
+            }
+        }
+
+        function stopExperience() {
+            isPlaying = false;
+            
+            if (toneTransport) {
+                toneTransport.stop();
+                toneTransport.cancel();
+            }
+            if (window.Tone) {
+                window.Tone.Destination.mute = true;
+                window.Tone.Destination.mute = false;
+            }
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+
+            if (window.hush) {
+                window.hush();
+            } else if (window.solid) {
+                window.solid(0,0,0,1).out();
+            }
+
+            const canvas = document.getElementById('hydra-canvas');
+            const gl = canvas.getContext('webgl');
+            if(gl) {
+                gl.clearColor(0,0,0,1);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+            }
+        }
+
+    </script>
+</body>
+</html>
