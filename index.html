@@ -23,7 +23,6 @@
             color: white;
             overflow: hidden; /* Prevent body scroll */
             touch-action: none;
-            /* Fix per l'altezza su mobile */
             height: 100dvh; 
             width: 100vw;
         }
@@ -88,7 +87,12 @@
         <div id="home-view" class="absolute inset-0 view-transition opacity-100 scale-100 blur-0">
             
             <!-- Navbar -->
-            <nav class="absolute top-0 w-full p-4 md:p-8 flex justify-between items-center z-50 pointer-events-none"></nav>
+            <nav class="absolute top-0 w-full p-4 md:p-8 flex justify-between items-center z-50 pointer-events-none">
+                <!-- PULSANTE EXIT -->
+                <button onclick="handleExit()" class="pointer-events-auto text-xs font-bold tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono">
+                    [ EXIT ]
+                </button>
+            </nav>
 
             <!-- Hero Text -->
             <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full px-4 pointer-events-none">
@@ -96,7 +100,6 @@
                     Synthesis
                 </h1>
                 
-                <!-- NUOVA FRASE AGGIUNTA QUI -->
                 <p class="mb-6 text-[10px] md:text-xs font-sans tracking-wide uppercase opacity-70 text-gray-300">
                     Si consiglia l'uso delle cuffie
                 </p>
@@ -108,6 +111,13 @@
 
             <!-- Lanes Container -->
             <div id="lanes-container" class="absolute inset-0 w-full h-full z-10"></div>
+        </div>
+
+        <!-- === EXIT VIEW (Schermata Segreta) === -->
+        <div id="exit-view" class="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center hidden">
+            <h1 class="text-2xl md:text-5xl font-mono font-bold tracking-widest text-red-600 uppercase animate-pulse text-center px-4 leading-relaxed glitch-text">
+                YOU CAN'T ESCAPE<br>FROM YOURSELF
+            </h1>
         </div>
 
         <!-- === DETAIL VIEW === -->
@@ -234,8 +244,55 @@
         // --- INITIALIZATION ---
         window.onload = () => {
             renderLanes();
-            startTitleGlitch(); // Avvia l'animazione del titolo
+            startTitleGlitch(); 
         };
+
+        // --- EXIT LOGIC (SOUND & VISUAL) ---
+        function handleExit() {
+            // 1. Play Deafening Sound (White Noise)
+            // Use basic AudioContext for immediate playback without external libs
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                const ctx = new AudioContext();
+                const bufferSize = ctx.sampleRate * 3; // 3 seconds buffer
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                // Generate White Noise
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                
+                // Gain node for volume control
+                const gain = ctx.createGain();
+                gain.gain.value = 0.5; // Adjust volume to be loud but safe
+
+                noise.connect(gain);
+                gain.connect(ctx.destination);
+                noise.start();
+            }
+
+            // 2. Hide Home Content with fade
+            const homeView = document.getElementById('home-view');
+            homeView.classList.remove('opacity-100');
+            homeView.classList.add('opacity-0');
+            
+            // 3. Show Exit Screen
+            setTimeout(() => {
+                const exitView = document.getElementById('exit-view');
+                exitView.classList.remove('hidden');
+                
+                // 4. Auto-return after 3 seconds
+                setTimeout(() => {
+                    exitView.classList.add('hidden');
+                    homeView.classList.remove('opacity-0');
+                    homeView.classList.add('opacity-100');
+                }, 3000);
+            }, 300);
+        }
 
         // --- TITLE GLITCH ANIMATION ---
         function startTitleGlitch() {
@@ -253,10 +310,9 @@
             ];
             const defaultFont = '"Inter", sans-serif';
 
-            // Ciclo: 2 sec glitch + 3 sec pausa = 5 secondi totali
+            // Ciclo: 2 sec glitch + 3 sec pausa
             setInterval(() => {
                 // FASE 1: GLITCH (durata 2 secondi)
-                // Cambia font ogni 250ms per 8 volte
                 let glitchCount = 0;
                 const glitchInterval = setInterval(() => {
                     const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
@@ -265,14 +321,13 @@
                     glitchCount++;
                     if (glitchCount >= 8) { // Dopo 2 secondi (8 * 250ms)
                         clearInterval(glitchInterval);
-                        
                         // FASE 2: RITORNO NORMALE
                         titleEl.style.fontFamily = defaultFont;
                         titleEl.style.transform = 'scale(1)';
                     }
                 }, 250); 
 
-            }, 5000); // Ripeti ogni 5 secondi
+            }, 5000); 
         }
 
         // --- RENDER LANES ---
