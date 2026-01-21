@@ -14,7 +14,7 @@
     <!-- Fonts: Inter + Expanded Glitch Fonts List -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Pixelify+Sans&family=Courier+Prime:wght@700&family=Bangers&family=Orbitron:wght@900&family=Playfair+Display:ital,wght@1,900&family=Monoton&family=Press+Start+2P&family=Permanent+Marker&family=Righteous&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Pixelify+Sans&family=Courier+Prime:wght@700&family=Bangers&family=Orbitron:wght@900&family=Playfair+Display:ital,wght@1,900&family=Monoton&family=Press+Start+2P&family=Permanent+Marker&family=Righteous&family=Bebas+Neue&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -191,7 +191,7 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="black" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         <span id="start-btn-text">AVVIA ESPERIENZA</span>
                     </button>
-                    <!-- Nuovo Elemento per il Sottotitolo -->
+                    <!-- Sottotitolo -->
                     <p id="start-btn-subtext" class="mt-6 text-white text-[10px] md:text-xs font-sans tracking-widest uppercase opacity-80 text-center max-w-md px-4"></p>
                     
                     <!-- SLOGAN SPECIALE PER A/V DISTORTION -->
@@ -218,12 +218,13 @@
                         id: 1, 
                         title: "Synthesis 6", 
                         image: "https://github.com/NgaLegins/Synthesis6/blob/main/Screenshot%202026-01-20%20alle%2022.39.03.png?raw=true",
-                        link: "https://ngalegins.github.io/Synthesis6/" 
+                        link: "https://ngalegins.github.io/Synthesis6/",
+                        hasEye: true,
+                        iconColor: 'text-white'
                     },
                     { 
                         id: 5, 
                         title: "Synthesis 7", 
-                        // NUOVA Copertina aggiornata
                         image: "https://github.com/NgaLegins/Synthesis7/blob/main/Screenshot%202026-01-21%20alle%2011.33.02.png?raw=true",
                         link: "https://ngalegins.github.io/Synthesis7/",
                         hasSwipe: true, 
@@ -287,6 +288,14 @@
                         link: "https://ngalegins.github.io/Synthesis4/", 
                         hasMic: true, 
                         iconColor: 'text-black' 
+                    },
+                    {
+                        id: 10,
+                        title: "Synthesis 10",
+                        image: "https://github.com/NgaLegins/Synthesis10/blob/main/Daily%20Flicks.gif?raw=true",
+                        link: "https://ngalegins.github.io/Synthesis10/",
+                        hasEye: true, 
+                        iconColor: 'text-black' // AGGIORNATO A NERO
                     }
                 ]
             }
@@ -438,6 +447,11 @@
                         iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
                            </div>`;
+                    } else if (item.hasEye) {
+                        // Icona Occhio
+                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                           </div>`;
                     }
                     
                     const sparkleHtml = item.isSpecial
@@ -449,7 +463,6 @@
                             onclick="handleItemClick('${itemData}')"
                             class="relative group cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-30 shrink-0"
                         >
-                            <!-- Immagini responsive senza bordi bianchi -->
                             <div class="relative w-28 sm:w-40 md:w-64 aspect-[4/3] overflow-hidden shadow-2xl ${borderClass}">
                                 <div class="w-full h-full overflow-hidden relative">
                                     <img 
@@ -524,14 +537,13 @@
             iframe.classList.add('hidden');
             iframe.src = "";
             startSubtext.innerText = ""; 
-            avSlogan.classList.add('hidden'); // Nascondi slogan di default
+            avSlogan.classList.add('hidden'); 
 
             // SPECIFIC LOGIC FOR A/V DISTORTION (Click to Start Overlay)
             if (item.id === 'special-av') {
                 overlay.classList.remove('hidden');
                 startText.innerText = "Dopo aver cliccato, riclicca";
                 
-                // Show Slogan ONLY for A/V Distortion
                 avSlogan.classList.remove('hidden');
                 
                 startBtn.onclick = function() {
