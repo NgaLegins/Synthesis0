@@ -89,11 +89,11 @@
             <!-- Navbar -->
             <nav class="absolute top-0 w-full p-4 md:p-8 flex justify-between items-center z-50 pointer-events-none">
                 <!-- PULSANTE EXIT (Sinistra) -->
-                <button onclick="handleExit()" class="pointer-events-auto text-xs font-bold tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono">
+                <button onclick="handleExit()" class="pointer-events-auto text-xs font-black tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono">
                     [ EXIT ]
                 </button>
 
-                <!-- PULSANTE HELP (Destra) - Ridimensionato -->
+                <!-- PULSANTE HELP (Destra) -->
                 <button onclick="toggleHelp()" class="pointer-events-auto flex items-center justify-center w-6 h-6 rounded-full border-2 border-white text-white hover:bg-white hover:text-black transition-all font-bold text-xs shadow-[0_0_5px_rgba(255,255,255,0.3)]">
                     ?
                 </button>
@@ -191,6 +191,13 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="black" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         <span id="start-btn-text">AVVIA ESPERIENZA</span>
                     </button>
+                    <!-- Nuovo Elemento per il Sottotitolo -->
+                    <p id="start-btn-subtext" class="mt-6 text-white text-[10px] md:text-xs font-sans tracking-widest uppercase opacity-80 text-center max-w-md px-4"></p>
+                    
+                    <!-- SLOGAN SPECIALE PER A/V DISTORTION -->
+                    <h2 id="av-slogan" class="hidden absolute bottom-16 md:bottom-20 text-white text-2xl md:text-4xl tracking-[0.2em] text-center w-full px-4 drop-shadow-lg" style="font-family: 'Bebas Neue', sans-serif;">
+                        AMPLIFY YOUR POSITIVE AND NEGATIVE SENSATIONS
+                    </h2>
                 </div>
 
             </div>
@@ -213,12 +220,14 @@
                         image: "https://github.com/NgaLegins/Synthesis6/blob/main/Screenshot%202026-01-20%20alle%2022.39.03.png?raw=true",
                         link: "https://ngalegins.github.io/Synthesis6/" 
                     },
-                    // ELEMENTO MODIFICATO QUI: Synthesis 7
                     { 
                         id: 5, 
                         title: "Synthesis 7", 
-                        image: "https://github.com/NgaLegins/Synthesis7/blob/main/Screenshot%202026-01-21%20alle%2000.53.55.png?raw=true",
-                        link: "https://ngalegins.github.io/Synthesis7/"
+                        // NUOVA Copertina aggiornata
+                        image: "https://github.com/NgaLegins/Synthesis7/blob/main/Screenshot%202026-01-21%20alle%2011.33.02.png?raw=true",
+                        link: "https://ngalegins.github.io/Synthesis7/",
+                        hasSwipe: true, 
+                        iconColor: 'text-white' 
                     }
                 ]
             },
@@ -229,10 +238,18 @@
                 items: [
                      { 
                          id: 2, 
-                         title: "Ethereal Brand", 
+                         title: "Synthesis 2", 
                          image: "https://github.com/NgaLegins/Synthesis2/blob/main/Screenshot%202026-01-21%20alle%2000.42.54.png?raw=true",
                          link: "https://ngalegins.github.io/Synthesis2/",
                          hasAudio: true 
+                     },
+                     {
+                         id: 8,
+                         title: "Synthesis 8",
+                         image: "https://github.com/NgaLegins/Synthesis8/blob/main/Screenshot%202026-01-21%20alle%2011.09.15.png?raw=true",
+                         link: "https://ngalegins.github.io/Synthesis8/",
+                         hasAudio: true, 
+                         iconColor: 'text-white'
                      }
                 ]
             },
@@ -253,8 +270,8 @@
                         title: "Synthesis 3", 
                         image: "https://github.com/NgaLegins/Synthesis3/blob/main/Screenshot%202026-01-20%20alle%2023.26.23.png?raw=true",
                         link: "https://ngalegins.github.io/Synthesis3/",
-                        hasWebcam: true, // Icona Webcam
-                        iconColor: 'text-black' // Colore Nero
+                        hasWebcam: true, 
+                        iconColor: 'text-black' 
                     }
                 ]
             },
@@ -268,8 +285,8 @@
                         title: "Synthesis 4", 
                         image: "https://github.com/NgaLegins/Synthesis4/blob/main/Screenshot%202026-01-20%20alle%2017.16.08.png?raw=true", 
                         link: "https://ngalegins.github.io/Synthesis4/", 
-                        hasMic: true, // Icona Microfono
-                        iconColor: 'text-black' // Colore Nero
+                        hasMic: true, 
+                        iconColor: 'text-black' 
                     }
                 ]
             }
@@ -416,6 +433,11 @@
                         iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                            </div>`;
+                    } else if (item.hasSwipe) {
+                        // Icona Dito (Mano indicativa/Swipe)
+                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
+                           </div>`;
                     }
                     
                     const sparkleHtml = item.isSpecial
@@ -493,17 +515,24 @@
             const overlay = document.getElementById('av-overlay');
             const startBtn = document.getElementById('start-btn');
             const startText = document.getElementById('start-btn-text');
+            const startSubtext = document.getElementById('start-btn-subtext');
+            const avSlogan = document.getElementById('av-slogan');
             
             document.getElementById('hydra-canvas').classList.add('hidden');
             overlay.classList.add('hidden');
             document.getElementById('standard-content').classList.add('hidden');
             iframe.classList.add('hidden');
             iframe.src = "";
+            startSubtext.innerText = ""; 
+            avSlogan.classList.add('hidden'); // Nascondi slogan di default
 
             // SPECIFIC LOGIC FOR A/V DISTORTION (Click to Start Overlay)
             if (item.id === 'special-av') {
                 overlay.classList.remove('hidden');
                 startText.innerText = "Dopo aver cliccato, riclicca";
+                
+                // Show Slogan ONLY for A/V Distortion
+                avSlogan.classList.remove('hidden');
                 
                 startBtn.onclick = function() {
                     overlay.classList.add('hidden');
