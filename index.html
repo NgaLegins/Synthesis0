@@ -2,32 +2,48 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Synthesis - A/V Experience</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Hydra Synth -->
-    <script src="https://unpkg.com/hydra-synth@1.3.0/dist/hydra-synth.js"></script>
+    <script src="https://unpkg.com/hydra-synth/dist/hydra-synth.js"></script>
     
-    <!-- Fonts: Inter + Expanded Glitch Fonts List -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Pixelify+Sans&family=Courier+Prime:wght@700&family=Bangers&family=Orbitron:wght@900&family=Playfair+Display:ital,wght@1,900&family=Monoton&family=Press+Start+2P&family=Permanent+Marker&family=Righteous&family=Bebas+Neue&display=swap" rel="stylesheet">
 
     <style>
+        /* Variabile CSS per gestire la safe area (notch) su iPhone */
+        :root {
+            --sat: env(safe-area-inset-top);
+            --sab: env(safe-area-inset-bottom);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: black;
             color: white;
-            overflow: hidden; /* Prevent body scroll */
-            touch-action: none;
+            overflow: hidden; 
+            touch-action: none; /* Disabilita zoom e pan nativi */
+            /* Altezza dinamica per mobile */
             height: 100dvh; 
             width: 100vw;
+            margin: 0;
+            padding: 0;
         }
         
-        /* Custom Animations */
+        /* Padding dinamico per la navbar per evitare la notch */
+        nav {
+            padding-top: max(1rem, var(--sat)) !important;
+            padding-left: max(1.5rem, env(safe-area-inset-left)) !important;
+            padding-right: max(1.5rem, env(safe-area-inset-right)) !important;
+        }
+
+        /* Animazioni Scroll Infinito */
         @keyframes scroll-left {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
@@ -44,16 +60,7 @@
             animation: scroll-right linear infinite;
         }
 
-        /* Hide scrollbars */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        /* Utility for transitions */
+        /* Utility Transizioni */
         .view-transition {
             transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -76,9 +83,35 @@
             transform: translateY(2rem);
             pointer-events: none;
         }
+
+        /* Fix specifico per orientamento orizzontale su mobile */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #synthesis-title {
+                font-size: 3rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+            .hero-container {
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            .lane-wrapper {
+                height: 70px !important;
+            }
+            /* Reposizionamento corsie compatto */
+            .lane-0 { top: 5% !important; }
+            .lane-1 { top: 22% !important; }
+            .lane-2 { top: 68% !important; }
+            .lane-3 { top: 85% !important; }
+        }
     </style>
 </head>
 <body class="selection:bg-white selection:text-black">
+
+    <!-- BACKGROUND CANVAS (Hydra) -->
+    <!-- object-cover assicura che il canvas copra tutto senza bordi bianchi -->
+    <canvas id="bg-canvas" class="fixed inset-0 w-full h-full object-cover -z-20"></canvas>
+    
+    <!-- DARK OVERLAY (Migliora leggibilità testo) -->
+    <div class="fixed inset-0 w-full h-full bg-black/60 -z-10 pointer-events-none"></div>
 
     <!-- APP CONTAINER -->
     <div id="app" class="relative w-full h-full">
@@ -87,30 +120,30 @@
         <div id="home-view" class="absolute inset-0 view-transition opacity-100 scale-100 blur-0">
             
             <!-- Navbar -->
-            <nav class="absolute top-0 w-full p-4 md:p-8 flex justify-between items-center z-50 pointer-events-none">
-                <!-- PULSANTE EXIT (Sinistra) -->
-                <button onclick="handleExit()" class="pointer-events-auto text-xs font-black tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono">
+            <nav class="absolute top-0 w-full flex justify-between items-center z-50 pointer-events-none">
+                <!-- PULSANTE EXIT -->
+                <button onclick="handleExit()" class="pointer-events-auto text-xs font-black tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono py-2 bg-black/30 backdrop-blur-sm px-4 rounded">
                     [ EXIT ]
                 </button>
 
-                <!-- PULSANTE HELP (Destra) -->
-                <button onclick="toggleHelp()" class="pointer-events-auto flex items-center justify-center w-6 h-6 rounded-full border-2 border-white text-white hover:bg-white hover:text-black transition-all font-bold text-xs shadow-[0_0_5px_rgba(255,255,255,0.3)]">
+                <!-- PULSANTE HELP -->
+                <button onclick="toggleHelp()" class="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white hover:bg-white hover:text-black transition-all font-bold text-sm shadow-[0_0_5px_rgba(255,255,255,0.3)] bg-black/30 backdrop-blur-sm">
                     ?
                 </button>
             </nav>
 
             <!-- Hero Text -->
-            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full px-4 pointer-events-none">
-                <h1 id="synthesis-title" class="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter mb-2 text-white uppercase whitespace-nowrap transition-all duration-75">
+            <div class="hero-container absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full px-4 pointer-events-none">
+                <h1 id="synthesis-title" class="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter mb-2 text-white uppercase whitespace-nowrap transition-all duration-75 drop-shadow-xl">
                     Synthesis
                 </h1>
                 
-                <p class="mb-6 text-[10px] md:text-xs font-sans tracking-wide uppercase opacity-70 text-gray-300">
+                <p class="mb-6 text-[10px] md:text-xs font-sans tracking-wide uppercase opacity-90 text-gray-100 drop-shadow-md">
                     Si consiglia l'uso delle cuffie e di attivare la suoneria
                 </p>
 
-                <p class="mt-4 md:mt-8 text-[10px] md:text-xs font-sans tracking-[0.3em] uppercase opacity-60 animate-pulse text-gray-400">
-                    Clicca per esplorare
+                <p class="mt-4 md:mt-8 text-[10px] md:text-xs font-sans tracking-[0.3em] uppercase opacity-80 animate-pulse text-gray-200 drop-shadow-md">
+                    Clicca le immagini
                 </p>
             </div>
 
@@ -118,48 +151,31 @@
             <div id="lanes-container" class="absolute inset-0 w-full h-full z-10"></div>
         </div>
 
-        <!-- === HELP MODAL (Pop-up Guida) - Dark Style === -->
-        <div id="help-modal" class="absolute inset-0 z-[60] bg-black/95 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-            <div class="bg-black text-white p-6 md:p-8 max-w-md w-full mx-4 relative shadow-[0_0_30px_rgba(255,255,255,0.1)] transform transition-transform scale-100 border-2 border-white">
-                <button onclick="toggleHelp()" class="absolute top-2 right-4 text-white hover:text-gray-400 font-bold text-2xl">&times;</button>
-                
+        <!-- === HELP MODAL === -->
+        <div id="help-modal" class="absolute inset-0 z-[60] bg-black/95 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-300 p-4">
+            <div class="bg-black text-white p-6 md:p-8 max-w-md w-full relative shadow-[0_0_30px_rgba(255,255,255,0.1)] transform transition-transform scale-100 border-2 border-white rounded-lg">
+                <button onclick="toggleHelp()" class="absolute top-2 right-4 text-white hover:text-gray-400 font-bold text-2xl p-2">&times;</button>
                 <h2 class="text-xl md:text-2xl font-bold mb-6 uppercase tracking-wider border-b border-white/30 pb-2">Guida</h2>
-                
                 <ul class="space-y-4 font-sans text-xs md:text-sm leading-relaxed text-gray-200">
-                    <li class="flex items-start">
-                        <span class="mr-3 font-bold text-white">1.</span> 
-                        <span>Clicca sulle immagini per avviare i vari effetti visivi.</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="mr-3 font-bold text-white">2.</span> 
-                        <span>Le icone in alto a destra di ogni immagine indicano la funzionalità specifica (es. interazione mouse, microfono, webcam).</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="mr-3 font-bold text-white">3.</span> 
-                        <span><span class="font-bold text-white">Attenzione:</span> Si consiglia vivamente l'uso delle cuffie 🎧</span>
-                    </li>
-                    <li class="flex items-start">
-                        <span class="mr-3 font-bold text-white">4.</span> 
-                        <span>Utilizza browser che permettano l'accesso a microfono e webcam (Chrome, Safari, ecc.).</span>
-                    </li>
+                    <li class="flex items-start"><span class="mr-3 font-bold text-white">1.</span> <span>Clicca sulle immagini per avviare i vari effetti visivi.</span></li>
+                    <li class="flex items-start"><span class="mr-3 font-bold text-white">2.</span> <span>Le icone in alto a destra indicano la funzionalità (mouse, microfono, webcam, swipe).</span></li>
+                    <li class="flex items-start"><span class="mr-3 font-bold text-white">3.</span> <span><span class="font-bold text-white">Attenzione:</span> Attiva la suoneria e usa le cuffie 🎧</span></li>
+                    <li class="flex items-start"><span class="mr-3 font-bold text-white">4.</span> <span>Usa browser moderni (Chrome o Safari) per microfono e webcam.</span></li>
                 </ul>
             </div>
         </div>
 
-        <!-- === EXIT VIEW (Schermata Segreta) === -->
+        <!-- === EXIT VIEW === -->
         <div id="exit-view" class="absolute inset-0 z-[100] bg-black flex flex-col items-center justify-center hidden">
-            <h1 class="text-2xl md:text-5xl font-mono font-bold tracking-widest text-red-600 uppercase animate-pulse text-center px-4 leading-relaxed glitch-text">
+            <h1 class="text-2xl md:text-5xl font-mono font-bold tracking-widest text-red-600 uppercase animate-pulse text-center px-4 leading-relaxed drop-shadow-[0_0_10px_rgba(255,0,0,0.8)]">
                 YOU CAN'T ESCAPE<br>FROM YOURSELF
             </h1>
         </div>
 
         <!-- === DETAIL VIEW === -->
         <div id="detail-view" class="absolute inset-0 z-50 bg-white flex flex-col view-transition hidden-down">
-            
-            <!-- Header (Back Button) -->
-            <div class="absolute top-0 left-0 w-full p-4 md:p-8 z-50 pointer-events-none">
-                <button onclick="goBack()" id="back-btn" class="pointer-events-auto group flex items-center space-x-2 text-xs md:text-sm font-sans uppercase tracking-widest transition-colors text-black hover:text-gray-500 cursor-pointer bg-black/20 backdrop-blur-sm p-3 md:p-2 rounded-full text-white hover:bg-black/40">
-                    <!-- Arrow Left Icon -->
+            <div class="absolute top-0 left-0 w-full p-6 md:p-8 z-50 pointer-events-none">
+                <button onclick="goBack()" id="back-btn" class="pointer-events-auto group flex items-center space-x-2 text-xs md:text-sm font-sans uppercase tracking-widest transition-colors cursor-pointer bg-black/20 backdrop-blur-sm p-3 rounded-full text-white hover:bg-black/40 shadow-lg">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transform group-hover:-translate-x-1 transition-transform">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
@@ -167,155 +183,128 @@
                     <span>Torna alla Gallery</span>
                 </button>
             </div>
-
-            <!-- Content Container -->
             <div class="flex-1 w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
-                
-                <!-- CANVAS for Experience A/V -->
                 <canvas id="hydra-canvas" class="absolute inset-0 w-full h-full object-cover hidden"></canvas>
-
-                <!-- IFRAME for External Links -->
                 <iframe id="external-iframe" class="absolute inset-0 w-full h-full border-0 hidden bg-white"></iframe>
-
-                <!-- STANDARD CONTENT -->
-                <div id="standard-content" class="text-center space-y-6 max-w-2xl px-4 md:px-8 bg-white/90 p-8 md:p-12 rounded-xl hidden">
-                    <div class="inline-block p-4 rounded-full bg-black text-white mb-4">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"></polyline><polyline points="9 5 12 2 15 5"></polyline><polyline points="15 19 12 22 9 19"></polyline><polyline points="19 9 22 12 19 15"></polyline><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line></svg>
-                    </div>
-                    <p class="text-gray-500 font-sans leading-relaxed">Contenuto Standard.</p>
+                <div id="standard-content" class="text-center space-y-6 max-w-2xl px-4 bg-white/90 p-8 rounded-xl hidden">
+                    <p class="text-gray-500 font-sans leading-relaxed">Caricamento...</p>
                 </div>
-
-                <!-- SPECIAL AV OVERLAY -->
-                <div id="av-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm hidden">
-                    <button id="start-btn" class="flex items-center gap-3 px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-gray-200 transition-transform transform hover:scale-105 rounded-full cursor-pointer">
+                <div id="av-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm hidden text-center">
+                    <button id="start-btn" class="flex items-center gap-3 px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-gray-200 transition-transform transform hover:scale-105 rounded-full cursor-pointer shadow-xl">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="black" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         <span id="start-btn-text">AVVIA ESPERIENZA</span>
                     </button>
-                    <!-- Sottotitolo -->
-                    <p id="start-btn-subtext" class="mt-6 text-white text-[10px] md:text-xs font-sans tracking-widest uppercase opacity-80 text-center max-w-md px-4"></p>
-                    
-                    <!-- SLOGAN SPECIALE PER A/V DISTORTION -->
-                    <h2 id="av-slogan" class="hidden absolute bottom-16 md:bottom-20 text-white text-2xl md:text-4xl tracking-[0.2em] text-center w-full px-4 drop-shadow-lg" style="font-family: 'Bebas Neue', sans-serif;">
+                    <p id="start-btn-subtext" class="mt-6 text-white text-[10px] md:text-xs font-sans tracking-widest uppercase opacity-80 max-w-md px-4 drop-shadow-md"></p>
+                    <h2 id="av-slogan" class="hidden absolute bottom-16 md:bottom-20 text-white text-2xl md:text-4xl tracking-[0.2em] w-full px-4 drop-shadow-lg" style="font-family: 'Bebas Neue', sans-serif;">
                         AMPLIFY YOUR POSITIVE AND NEGATIVE SENSATIONS
                     </h2>
                 </div>
-
             </div>
         </div>
 
     </div>
 
-    <!-- MAIN SCRIPT -->
     <script>
+        // --- HYDRA BACKGROUND INIT ---
+        function initBackground() {
+            try {
+                const bgCanvas = document.getElementById('bg-canvas');
+                if(!bgCanvas) return;
+
+                // Hydra Setup
+                const bgHydra = new Hydra({
+                    canvas: bgCanvas,
+                    detectAudio: false,
+                    makeGlobal: false,
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+
+                const s = bgHydra.synth;
+                const isSpasm = () => (s.time % 6 < 0.3);
+
+                // Caricamento Immagine
+                if (s.s0 && typeof s.s0.initImage === 'function') {
+                    s.s0.initImage("https://cdn.statically.io/gh/NgaLegins/Synthesis0/main/Screenshot%202026-01-22%20alle%2009.55.46.png");
+                    
+                    // Script:
+                    // 1. Usa l'immagine sorgente (s0)
+                    // 2. Scala per mantenere le proporzioni (evita stretching su mobile)
+                    // 3. Applica l'effetto liquido a tempo
+                    s.src(s.s0)
+                     .scale(1, () => window.innerHeight / window.innerWidth) 
+                     .modulate(
+                        s.noise(30, 1),
+                        () => isSpasm() ? 0.5 : 0 
+                     )
+                     .modulate(
+                        s.noise(0.7),
+                        () => isSpasm() ? 0.5 : 0
+                     )
+                     .color(
+                        1, 
+                        1, 
+                        () => isSpasm() ? 0 : 1 
+                     )
+                     .out(s.o0);
+
+                } else {
+                    console.warn("Hydra initImage failed, fallback.");
+                    s.osc(10, 0.1, 1).color(1, 0, 0.5).out(s.o0);
+                }
+
+                // Gestione Resize per responsività
+                window.addEventListener('resize', () => {
+                    bgHydra.setResolution(window.innerWidth, window.innerHeight);
+                });
+
+            } catch(e) {
+                console.error("Hydra BG Error:", e);
+            }
+        }
+
         // --- DATA ---
         const lanesData = [
             {
-                id: 'lane-1', 
-                mobileTop: 'top-[5%]', desktopTop: 'md:top-[5%]', 
-                direction: 'left', speed: 40,
+                mobileTop: 'top-[8%]', desktopTop: 'md:top-[5%]', direction: 'left', speed: 40,
                 items: [
-                    { 
-                        id: 1, 
-                        title: "Synthesis 6", 
-                        image: "https://github.com/NgaLegins/Synthesis6/blob/main/Screenshot%202026-01-20%20alle%2022.39.03.png?raw=true",
-                        link: "https://ngalegins.github.io/Synthesis6/",
-                        hasEye: true,
-                        iconColor: 'text-white'
-                    },
-                    { 
-                        id: 5, 
-                        title: "Synthesis 7", 
-                        image: "https://github.com/NgaLegins/Synthesis7/blob/main/Screenshot%202026-01-21%20alle%2011.33.02.png?raw=true",
-                        link: "https://ngalegins.github.io/Synthesis7/",
-                        hasSwipe: true, 
-                        iconColor: 'text-white' 
-                    }
+                    { id: 1, title: "Synthesis 6", image: "https://github.com/NgaLegins/Synthesis6/blob/main/Screenshot%202026-01-20%20alle%2022.39.03.png?raw=true", link: "https://ngalegins.github.io/Synthesis6/", hasEye: true, iconColor: 'text-white' },
+                    { id: 5, title: "Synthesis 7", image: "https://github.com/NgaLegins/Synthesis7/blob/main/Screenshot%202026-01-21%20alle%2011.33.02.png?raw=true", link: "https://ngalegins.github.io/Synthesis7/", hasSwipe: true, iconColor: 'text-white' }
                 ]
             },
             {
-                id: 'lane-2', 
-                mobileTop: 'top-[22%]', desktopTop: 'md:top-[25%]', 
-                direction: 'right', speed: 55,
+                mobileTop: 'top-[26%]', desktopTop: 'md:top-[25%]', direction: 'right', speed: 55,
                 items: [
-                     { 
-                         id: 2, 
-                         title: "Synthesis 2", 
-                         image: "https://github.com/NgaLegins/Synthesis2/blob/main/Screenshot%202026-01-21%20alle%2000.42.54.png?raw=true",
-                         link: "https://ngalegins.github.io/Synthesis2/",
-                         hasAudio: true 
-                     },
-                     {
-                         id: 8,
-                         title: "Synthesis 8",
-                         image: "https://github.com/NgaLegins/Synthesis8/blob/main/Screenshot%202026-01-21%20alle%2011.09.15.png?raw=true",
-                         link: "https://ngalegins.github.io/Synthesis8/",
-                         hasAudio: true, 
-                         iconColor: 'text-white'
-                     }
+                     { id: 2, title: "Synthesis 2", image: "https://github.com/NgaLegins/Synthesis2/blob/main/Screenshot%202026-01-21%20alle%2000.42.54.png?raw=true", link: "https://ngalegins.github.io/Synthesis2/", hasAudio: true },
+                     { id: 8, title: "Synthesis 8", image: "https://github.com/NgaLegins/Synthesis8/blob/main/Screenshot%202026-01-21%20alle%2011.09.15.png?raw=true", link: "https://ngalegins.github.io/Synthesis8/", hasAudio: true, iconColor: 'text-white' }
                 ]
             },
             {
-                id: 'lane-3', 
-                mobileTop: 'top-[62%]', desktopTop: 'md:top-[65%]', 
-                direction: 'right', speed: 45,
+                mobileTop: 'top-[64%]', desktopTop: 'md:top-[65%]', direction: 'right', speed: 45,
                 items: [
-                    { 
-                        id: 'special-av', 
-                        title: "A/V Distortion", 
-                        image: "https://raw.githubusercontent.com/NgaLegins/Synthesis/main/Screenshot%202026-01-20%20alle%2015.40.25.png",
-                        link: "https://ngalegins.github.io/Synthesis5/",
-                        isSpecial: true,
-                    },
-                    { 
-                        id: 6, 
-                        title: "Synthesis 3", 
-                        image: "https://github.com/NgaLegins/Synthesis3/blob/main/Screenshot%202026-01-20%20alle%2023.26.23.png?raw=true",
-                        link: "https://ngalegins.github.io/Synthesis3/",
-                        hasWebcam: true, 
-                        iconColor: 'text-black' 
-                    }
+                    { id: 'special-av', title: "A/V Distortion", image: "https://raw.githubusercontent.com/NgaLegins/Synthesis/main/Screenshot%202026-01-20%20alle%2015.40.25.png", link: "https://ngalegins.github.io/Synthesis5/", isSpecial: true },
+                    { id: 6, title: "Synthesis 3", image: "https://github.com/NgaLegins/Synthesis3/blob/main/Screenshot%202026-01-20%20alle%2023.26.23.png?raw=true", link: "https://ngalegins.github.io/Synthesis3/", hasWebcam: true, iconColor: 'text-black' }
                 ]
             },
             {
-                id: 'lane-4', 
-                mobileTop: 'top-[80%]', desktopTop: 'md:top-[82%]',
-                direction: 'left', speed: 35,
+                mobileTop: 'top-[82%]', desktopTop: 'md:top-[82%]', direction: 'left', speed: 35,
                 items: [
-                    { 
-                        id: 4, 
-                        title: "Synthesis 4", 
-                        image: "https://github.com/NgaLegins/Synthesis4/blob/main/Screenshot%202026-01-20%20alle%2017.16.08.png?raw=true", 
-                        link: "https://ngalegins.github.io/Synthesis4/", 
-                        hasMic: true, 
-                        iconColor: 'text-black' 
-                    },
-                    {
-                        id: 10,
-                        title: "Synthesis 10",
-                        image: "https://github.com/NgaLegins/Synthesis10/blob/main/Daily%20Flicks.gif?raw=true",
-                        link: "https://ngalegins.github.io/Synthesis10/",
-                        hasEye: true, 
-                        iconColor: 'text-black' // AGGIORNATO A NERO
-                    }
+                    { id: 4, title: "Synthesis 4", image: "https://github.com/NgaLegins/Synthesis4/blob/main/Screenshot%202026-01-20%20alle%2017.16.08.png?raw=true", link: "https://ngalegins.github.io/Synthesis4/", hasMic: true, iconColor: 'text-black' },
+                    { id: 10, title: "Synthesis 10", image: "https://github.com/NgaLegins/Synthesis10/blob/main/Daily%20Flicks.gif?raw=true", link: "https://ngalegins.github.io/Synthesis10/", hasEye: true, iconColor: 'text-black' }
                 ]
             }
         ];
 
-        // --- STATE & REFS ---
         let currentItem = null;
         let isPlaying = false;
-        let animationId = null;
-        let toneTransport = null;
-        let hydraInstance = null;
-        let scriptsLoaded = false;
+        let audioCtx = null;
 
-        // --- INITIALIZATION ---
         window.onload = () => {
+            initBackground();
             renderLanes();
             startTitleGlitch(); 
         };
 
-        // --- HELP MODAL LOGIC ---
         function toggleHelp() {
             const modal = document.getElementById('help-modal');
             if (modal.classList.contains('hidden')) {
@@ -327,27 +316,23 @@
             }
         }
 
-        // --- EXIT LOGIC (SOUND & VISUAL) ---
         function handleExit() {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
-                const ctx = new AudioContext();
-                const bufferSize = ctx.sampleRate * 3; 
-                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const bufferSize = audioCtx.sampleRate * 3; 
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
 
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-
-                const noise = ctx.createBufferSource();
+                const noise = audioCtx.createBufferSource();
                 noise.buffer = buffer;
-                
-                const gain = ctx.createGain();
-                gain.gain.value = 0.5;
-
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0.4;
                 noise.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(audioCtx.destination);
                 noise.start();
             }
 
@@ -358,7 +343,6 @@
             setTimeout(() => {
                 const exitView = document.getElementById('exit-view');
                 exitView.classList.remove('hidden');
-                
                 setTimeout(() => {
                     exitView.classList.add('hidden');
                     homeView.classList.remove('opacity-0');
@@ -367,117 +351,62 @@
             }, 300);
         }
 
-        // --- TITLE GLITCH ANIMATION ---
         function startTitleGlitch() {
             const titleEl = document.getElementById('synthesis-title');
-            const fonts = [
-                '"Pixelify Sans", sans-serif', 
-                '"Courier Prime", monospace', 
-                '"Playfair Display", serif', 
-                '"Bangers", cursive', 
-                '"Orbitron", sans-serif',
-                '"Monoton", cursive',
-                '"Press Start 2P", cursive',
-                '"Permanent Marker", cursive',
-                '"Righteous", cursive'
-            ];
+            const fonts = ['"Monoton"', '"Press Start 2P"', '"Permanent Marker"', '"Orbitron"', '"Pixelify Sans"', '"Righteous"'];
             const defaultFont = '"Inter", sans-serif';
 
             setInterval(() => {
                 let glitchCount = 0;
                 const glitchInterval = setInterval(() => {
-                    const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
-                    titleEl.style.fontFamily = randomFont;
-                    
+                    titleEl.style.fontFamily = fonts[Math.floor(Math.random() * fonts.length)];
                     glitchCount++;
                     if (glitchCount >= 8) { 
                         clearInterval(glitchInterval);
                         titleEl.style.fontFamily = defaultFont;
-                        titleEl.style.transform = 'scale(1)';
                     }
                 }, 250); 
-
             }, 5000); 
         }
 
-        // --- RENDER LANES ---
         function renderLanes() {
             const container = document.getElementById('lanes-container');
             let html = '';
 
-            lanesData.forEach(lane => {
+            lanesData.forEach((lane, lIdx) => {
                 let itemsHtml = '';
                 const loopItems = [...lane.items, ...lane.items, ...lane.items, ...lane.items];
                 
                 loopItems.forEach((item, idx) => {
-                    const uniqueId = `item-${lane.id}-${idx}`;
                     const itemData = encodeURIComponent(JSON.stringify(item));
-                    
-                    const borderClass = ''; 
-                    
-                    // Logic per le icone con gestione colore
-                    let iconHtml = '';
                     const iconColor = item.iconColor || 'text-white';
                     const iconShadow = iconColor === 'text-black' ? '' : 'drop-shadow-md';
-
-                    if (item.isSpecial) {
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                           </div>`;
-                    } else if (item.hasMic) {
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                           </div>`;
-                    } else if (item.hasWebcam) {
-                        // Icona Webcam
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="8"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 22h10"></path><path d="M12 22v-4"></path></svg>
-                           </div>`;
-                    } else if (item.hasMouse) {
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>
-                           </div>`;
-                    } else if (item.hasAudio) {
-                        // Icona Audio (Speaker)
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                           </div>`;
-                    } else if (item.hasSwipe) {
-                        // Icona Dito (Mano indicativa/Swipe)
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
-                           </div>`;
-                    } else if (item.hasEye) {
-                        // Icona Occhio
-                        iconHtml = `<div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">
-                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                           </div>`;
-                    }
                     
-                    const sparkleHtml = item.isSpecial
-                        ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`
-                        : '';
+                    let iconHtml = '';
+                    if (item.hasMic) {
+                        iconHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+                    } else if (item.hasWebcam) {
+                        iconHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="8"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 22h10"></path><path d="M12 22v-4"></path></svg>`;
+                    } else if (item.hasAudio || item.isSpecial) {
+                        iconHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+                    } else if (item.hasSwipe) {
+                        iconHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>`;
+                    } else if (item.hasEye) {
+                        iconHtml = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                    }
 
                     itemsHtml += `
-                        <div 
-                            onclick="handleItemClick('${itemData}')"
-                            class="relative group cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-30 shrink-0"
-                        >
-                            <div class="relative w-28 sm:w-40 md:w-64 aspect-[4/3] overflow-hidden shadow-2xl ${borderClass}">
+                        <div onclick="handleItemClick('${itemData}')" class="relative group cursor-pointer shrink-0 transition-transform duration-300 hover:scale-105 active:scale-95">
+                            <div class="relative w-28 sm:w-40 md:w-64 aspect-[4/3] overflow-hidden shadow-2xl">
                                 <div class="w-full h-full overflow-hidden relative">
-                                    <img 
-                                        src="${item.image}" 
-                                        alt="${item.title}" 
-                                        class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                                        onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'"
-                                    />
-                                    <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300"></div>
-                                    ${iconHtml}
+                                    <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"/>
+                                    <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent"></div>
+                                    <div class="absolute top-2 right-2 ${iconColor} ${iconShadow} animate-pulse">${iconHtml}</div>
                                 </div>
                             </div>
-                            <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
-                                <span class="text-[10px] md:text-xs font-sans tracking-widest bg-black text-white px-2 py-1 uppercase border border-white/20 flex items-center">
-                                    ${item.title} ${sparkleHtml}
+                            <div class="absolute top-full left-1/2 transform -translate-x-1/2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                                <span class="text-[9px] md:text-xs font-sans tracking-widest bg-black text-white px-2 py-1 uppercase border border-white/20">
+                                    ${item.title}
                                 </span>
                             </div>
                         </div>
@@ -485,45 +414,34 @@
                 });
 
                 const animClass = lane.direction === 'left' ? 'animate-scroll-left' : 'animate-scroll-right';
-                
-                // Classi responsive per posizionamento verticale
-                const posClasses = `${lane.mobileTop} ${lane.desktopTop}`;
+                const posClasses = `${lane.mobileTop} ${lane.desktopTop} lane-${lIdx}`;
 
                 html += `
-                    <div class="absolute w-full flex items-center overflow-hidden h-32 md:h-48 ${posClasses}">
+                    <div class="absolute w-full flex items-center overflow-hidden h-24 sm:h-32 md:h-48 lane-wrapper ${posClasses}">
                         <div class="flex items-center space-x-12 md:space-x-48 w-max ${animClass}" style="animation-duration: ${lane.speed}s; padding-left: 10vw;">
                             ${itemsHtml}
                         </div>
                     </div>
                 `;
             });
-
             container.innerHTML = html;
         }
 
-        // --- NAVIGATION LOGIC ---
         function handleItemClick(encodedItem) {
             const item = JSON.parse(decodeURIComponent(encodedItem));
             currentItem = item;
-
             document.getElementById('home-view').classList.add('fade-out-scale');
-            document.getElementById('home-view').classList.remove('opacity-100', 'scale-100', 'blur-0');
-            
             setTimeout(() => {
-                const detailView = document.getElementById('detail-view');
-                detailView.classList.remove('hidden-down');
-                detailView.classList.add('fade-in-up');
-                
+                const dv = document.getElementById('detail-view');
+                dv.classList.remove('hidden-down');
+                dv.classList.add('fade-in-up');
                 setupDetailView(item);
             }, 600);
         }
 
-        function goBack() {
-            window.location.reload();
-        }
+        function goBack() { window.location.reload(); }
 
         function setupDetailView(item) {
-            const backBtn = document.getElementById('back-btn');
             const iframe = document.getElementById('external-iframe');
             const overlay = document.getElementById('av-overlay');
             const startBtn = document.getElementById('start-btn');
@@ -531,96 +449,25 @@
             const startSubtext = document.getElementById('start-btn-subtext');
             const avSlogan = document.getElementById('av-slogan');
             
-            document.getElementById('hydra-canvas').classList.add('hidden');
-            overlay.classList.add('hidden');
-            document.getElementById('standard-content').classList.add('hidden');
             iframe.classList.add('hidden');
+            overlay.classList.add('hidden');
             iframe.src = "";
             startSubtext.innerText = ""; 
             avSlogan.classList.add('hidden'); 
 
-            // SPECIFIC LOGIC FOR A/V DISTORTION (Click to Start Overlay)
             if (item.id === 'special-av') {
                 overlay.classList.remove('hidden');
                 startText.innerText = "Dopo aver cliccato, riclicca";
-                
                 avSlogan.classList.remove('hidden');
-                
-                startBtn.onclick = function() {
-                    overlay.classList.add('hidden');
-                    iframe.src = item.link;
-                    iframe.classList.remove('hidden');
-                };
-
-                backBtn.classList.add('bg-black/50', 'text-white');
+                startBtn.onclick = () => { overlay.classList.add('hidden'); iframe.src = item.link; iframe.classList.remove('hidden'); };
                 return;
             }
 
             if (item.link) {
                 iframe.src = item.link;
                 iframe.classList.remove('hidden');
-                backBtn.classList.add('bg-black/50', 'text-white');
-            } else if (item.isSpecial) {
-                // Logic for other internal special items if any (currently special-av has link)
-                document.getElementById('hydra-canvas').classList.remove('hidden');
-                overlay.classList.remove('hidden');
-                startText.innerText = "AVVIA ESPERIENZA";
-                
-                startBtn.onclick = startExperience;
-                
-                backBtn.classList.remove('bg-black/50');
-                backBtn.classList.add('text-white');
-
-                if (!scriptsLoaded) {
-                    startBtn.disabled = true;
-                    startText.innerText = "CARICAMENTO...";
-                    try {
-                        loadScript("https://unpkg.com/tone@14.7.77/build/Tone.js")
-                        .then(() => {
-                            scriptsLoaded = true;
-                            startBtn.disabled = false;
-                            startText.innerText = "AVVIA ESPERIENZA";
-                        });
-                    } catch(e) { console.error(e); }
-                }
-            } else {
-                document.getElementById('standard-content').classList.remove('hidden');
-                backBtn.classList.remove('bg-black/50', 'text-white');
-                backBtn.classList.add('text-black');
             }
         }
-
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                if (document.querySelector(`script[src="${src}"]`)) {
-                    resolve();
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.body.appendChild(script);
-            });
-        }
-
-        async function startExperience() {
-            // (Funzione per esperienze locali, non usata se c'è un link esterno)
-            try {
-                document.getElementById('av-overlay').classList.add('hidden');
-                await window.Tone.start();
-                isPlaying = true;
-                // Hydra logic if needed locally...
-            } catch (e) {
-                console.error("Error starting AV:", e);
-            }
-        }
-
-        function stopExperience() {
-            isPlaying = false;
-            // Cleanup logic...
-        }
-
     </script>
 </body>
 </html>
