@@ -106,13 +106,6 @@
 </head>
 <body class="selection:bg-white selection:text-black">
 
-    <!-- BACKGROUND CANVAS (Hydra) -->
-    <!-- object-cover assicura che il canvas copra tutto senza bordi bianchi -->
-    <canvas id="bg-canvas" class="fixed inset-0 w-full h-full object-cover -z-20"></canvas>
-    
-    <!-- DARK OVERLAY (Migliora leggibilità testo) -->
-    <div class="fixed inset-0 w-full h-full bg-black/60 -z-10 pointer-events-none"></div>
-
     <!-- APP CONTAINER -->
     <div id="app" class="relative w-full h-full">
 
@@ -205,64 +198,6 @@
     </div>
 
     <script>
-        // --- HYDRA BACKGROUND INIT ---
-        function initBackground() {
-            try {
-                const bgCanvas = document.getElementById('bg-canvas');
-                if(!bgCanvas) return;
-
-                // Hydra Setup
-                const bgHydra = new Hydra({
-                    canvas: bgCanvas,
-                    detectAudio: false,
-                    makeGlobal: false,
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                });
-
-                const s = bgHydra.synth;
-                const isSpasm = () => (s.time % 6 < 0.3);
-
-                // Caricamento Immagine
-                if (s.s0 && typeof s.s0.initImage === 'function') {
-                    s.s0.initImage("https://cdn.statically.io/gh/NgaLegins/Synthesis0/main/Screenshot%202026-01-22%20alle%2009.55.46.png");
-                    
-                    // Script:
-                    // 1. Usa l'immagine sorgente (s0)
-                    // 2. Scala per mantenere le proporzioni (evita stretching su mobile)
-                    // 3. Applica l'effetto liquido a tempo
-                    s.src(s.s0)
-                     .scale(1, () => window.innerHeight / window.innerWidth) 
-                     .modulate(
-                        s.noise(30, 1),
-                        () => isSpasm() ? 0.5 : 0 
-                     )
-                     .modulate(
-                        s.noise(0.7),
-                        () => isSpasm() ? 0.5 : 0
-                     )
-                     .color(
-                        1, 
-                        1, 
-                        () => isSpasm() ? 0 : 1 
-                     )
-                     .out(s.o0);
-
-                } else {
-                    console.warn("Hydra initImage failed, fallback.");
-                    s.osc(10, 0.1, 1).color(1, 0, 0.5).out(s.o0);
-                }
-
-                // Gestione Resize per responsività
-                window.addEventListener('resize', () => {
-                    bgHydra.setResolution(window.innerWidth, window.innerHeight);
-                });
-
-            } catch(e) {
-                console.error("Hydra BG Error:", e);
-            }
-        }
-
         // --- DATA ---
         const lanesData = [
             {
@@ -300,7 +235,6 @@
         let audioCtx = null;
 
         window.onload = () => {
-            initBackground();
             renderLanes();
             startTitleGlitch(); 
         };
@@ -317,6 +251,7 @@
         }
 
         function handleExit() {
+            // Suono assordante (Noise)
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
                 if (!audioCtx) audioCtx = new AudioContext();
