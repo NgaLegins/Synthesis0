@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Synthesis</title>
+    <title>Synthesis - A/V Experience</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -100,7 +100,8 @@
             
             <!-- Navbar: Fixed + Sfondo Nero sfumato per visibilità su scroll -->
             <nav class="fixed top-0 w-full px-6 md:px-12 flex justify-between items-center z-50 bg-black/80 backdrop-blur-md pb-4 border-b border-white/10">
-                <button onclick="handleExit()" class="pointer-events-auto text-xs font-black tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono py-2 bg-black/50 px-4 rounded border border-red-900/30">
+                <!-- PULSANTE EXIT: Rimosso border -->
+                <button onclick="handleExit()" class="pointer-events-auto text-xs font-black tracking-[0.2em] text-red-600 hover:text-red-400 transition-colors uppercase font-mono py-2 bg-black/50 px-4 rounded">
                     [ EXIT ]
                 </button>
                 <button onclick="toggleHelp()" class="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white hover:bg-white hover:text-black transition-all font-bold text-sm shadow-[0_0_10px_rgba(255,255,255,0.2)] bg-black">
@@ -128,7 +129,7 @@
             </div>
             
             <!-- Footer -->
-            <div class="text-center py-20 opacity-30 text-[20px] uppercase tracking-widest">
+            <div class="text-center py-20 opacity-30 text-[25px] uppercase tracking-widest">
                 YOU ARE ONE
             </div>
         </div>
@@ -186,7 +187,7 @@
     </div>
 
     <script>
-        // --- ROUTE DATA (Sequenza Riordinata) ---
+        // --- ROUTE DATA (Sequenza 1-8 Corretta) ---
         const routeData = [
             // 1. Synthesis 1 (Ex Synthesis 2)
             { 
@@ -200,11 +201,6 @@
             { 
                 id: 6, 
                 title: "Synthesis 6", 
-                // NUOVA COPERTINA GIF
-                image: "https://github.com/NgaLegins/Gif-Photos/blob/main/Substance%20GIF%20(1).gif?raw=true", // Ops, questa era per Synthesis 6, controllo la richiesta.
-                // La richiesta precedente era per l'id 6 che è Synthesis 6. 
-                // Il testo diceva: Rimpiazza la copertina dell'id 6 con questa: https://github.com/NgaLegins/Gif-Photos/blob/main/Substance%20GIF%20(1).gif?raw=true
-                // Qui metto quella richiesta.
                 image: "https://github.com/NgaLegins/Gif-Photos/blob/main/Substance%20GIF%20(1).gif?raw=true",
                 link: "https://ngalegins.github.io/Synthesis7/",
                 hasSwipe: true, 
@@ -218,8 +214,6 @@
                 hasAudio: true,
                 iconColor: 'text-white' 
             },
-            // 2. Synthesis 2 (Ex Synthesis 3)
-            // 3. Synthesis 3 (Ex Synthesis 4)
             { 
                 id: 3, 
                 title: "Synthesis 3", 
@@ -228,7 +222,6 @@
                 hasMic: true, 
                 iconColor: 'text-black' 
             },
-            // 4. Synthesis 4 (A/V Distortion)
             { 
                 id: 'special-av', 
                 title: "Synthesis 4", 
@@ -236,16 +229,15 @@
                 link: "https://ngalegins.github.io/Synthesis5/",
                 isSpecial: true,
             },
-            // 5. Synthesis 5 (Ex Synthesis 6 GIF)
+            // 7. Synthesis 7 (Ex Synthesis 8)
             { 
                 id: 5, 
                 title: "Synthesis 5", 
-                image: "https://github.com/NgaLegins/Synthesis6/blob/main/Screenshot%202026-01-20%20alle%2022.39.03.png?raw=true",
+                image: "https://github.com/NgaLegins/Gif-Photos/blob/main/Screenshot%202026-01-20%20alle%2022.39.03.png?raw=true",
                 link: "https://ngalegins.github.io/Synthesis6/",
                 hasEye: true,
                 iconColor: 'text-white'
             },
-            // 7. Synthesis 7 (Ex Synthesis 8)
             {
                 id: 7, 
                 title: "Synthesis 7",
@@ -291,10 +283,7 @@
                 html += `
                     <div class="route-item w-full flex flex-col ${alignClass} relative px-8" data-index="${index}">
                         
-                        <!-- Numero Tappa Sfondo (Centrato) -->
-                        <div class="text-[8rem] leading-none font-black text-white/5 absolute top-0 left-1/2 -translate-x-1/2 -translate-y-10 z-0 select-none pointer-events-none">
-                            ${index + 1}
-                        </div>
+                        <!-- REMOVED NUMBER BACKGROUND -->
 
                         <div onclick="handleItemClick('${itemData}')" 
                              class="card-element relative z-10 w-full md:w-96 aspect-[4/3] bg-white cursor-pointer transform transition-all duration-300 hover:scale-105 hover:z-20 shadow-2xl ${borderClass}">
@@ -308,6 +297,7 @@
                             </div>
                         </div>
                         
+                        <!-- REMOVED TITLE LABEL -->
                     </div>
                 `;
             });
